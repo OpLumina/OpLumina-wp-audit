@@ -25,9 +25,9 @@ External plugin vuln DB:
   Randomization of paths (forgot if I already added this or not)
 """
 import hashlib
-import asyncio
+import asyncio # asyncio porbably
 import argparse
-import random
+import random # Random
 import json
 import re
 import sys
@@ -45,9 +45,7 @@ except ImportError:
     print("[-] packaging not found.  pip install packaging")
     sys.exit(1)
 
-# ──────────────────────────────────────────────────────────────
-#  Colour helpers
-# ──────────────────────────────────────────────────────────────
+#  COLORS YAY
 C = {
     "reset": "\033[0m",
     "crit":  "\033[91m",
@@ -1067,7 +1065,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
             "WordPress Intel Scanner\n\n"
-            "⚠️  LEGAL WARNING:\n"
+            "WEEWOO  LEGAL WARNING:\n"
             "This tool is for AUTHORIZED security research, bug bounty, or law enforcement use ONLY.\n"
             "Unauthorized scanning of systems may violate local, state, and federal laws.\n"
             "You MUST have prior, explicit, written authorization from the system owner.\n"
@@ -1076,7 +1074,7 @@ if __name__ == "__main__":
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""
 phases:
-  paths    — ~70 built-in sensitive path checks
+  paths    — built-in sensitive path checks
   passive  — fetch homepage source, extract plugin slugs
   enum     — enumerate plugin slugs in vuln DB, detect version
 
