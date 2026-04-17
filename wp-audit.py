@@ -771,12 +771,14 @@ class WPScanner:
                         return m.group(1).strip().lower().lstrip('v').rstrip(".")
         return None
 
+    # Have I told you that I'm super afraid of slugs? 
     async def run_passive_detection(self, client):
         hdr("PASSIVE PLUGIN & VERSION DETECTION")
         print(f"  Fetching page source...\n")
 
         pages = [self.url.rstrip("/") + "/", self.url.rstrip("/") + "/wp-login.php"]
         # Use a set to automatically handle duplicates across different pages
+        # AHHHHHHHHHHHHHHHHHHHHH SCARY
         unique_slugs = set()
 
         for page_url in pages:
