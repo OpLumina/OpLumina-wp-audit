@@ -55,7 +55,7 @@ C = {
     "ok":    "\033[92m",
     "dim":   "\033[2m",
     "bold":  "\033[1m",
-    "yellow": "\033[93m", # Add this line
+    "yellow": "\033[93m",
 }
 SEV_COLOR = {"CRIT": C["crit"], "HIGH": C["high"], "MED": C["med"], "INFO": C["info"]}
 
