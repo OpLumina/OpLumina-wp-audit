@@ -97,7 +97,7 @@ BUILTIN_PATHS = [
     ("/.mailmap",                             "INFO",     "Git mailmap (Developer emails)",           "recon"),
     ("/search",                               "INFO",     "Search Bar",                               "recon"),
     
-    #  2. REST API & ENUM 
+    #  REST API & ENUM 
     ("/wp-json/",                             "INFO",     "REST API root (endpoint enumeration)",     "recon"),
     ("/wp-json/wp/v2/types",                  "INFO",     "REST API post types enumeration",          "recon"),
     ("/wp-json/wp/v2/users",                  "HIGH",     "REST API user listing (unauthenticated)",  "recon"),
@@ -120,7 +120,7 @@ BUILTIN_PATHS = [
     ("/wp-json/wp/v2/settings",               "HIGH",     "WP Settings via REST (Admin only?)",       "sensitive"),
     
 
-    #  3. SENSITIVE CONFIGURATION LEAKS 
+    #  SENSITIVE CONFIGURATION LEAKS 
     ("/wp-content/plugins/wp-file-manager/lib/php/connector.minimal.php", "CRITICAL", "CVE-2020-25213",   "recon"),
     ("/wp-config.php",                        "CRITICAL", "wp-config.php (DB credentials)",           "sensitive"),
     ("/wp-config.php.bak",                    "CRITICAL", "wp-config.php.bak backup",               "sensitive"),
@@ -145,7 +145,7 @@ BUILTIN_PATHS = [
     ("/.aws/credentials",                     "CRITICAL", "AWS Credentials file",                     "sensitive"),
     ("/.npmrc",                               "CRITICAL", "NPM Registry Auth Tokens",                 "sensitive"),
 
-    #  4. ACCESS KEYS & HISTORY 
+    #  ACCESS KEYS & HISTORY 
     ("/.vscode/sftp.json",                    "CRITICAL", "VSCode SFTP (Plaintext Credentials)",      "sensitive"),
     ("/.ssh/id_rsa",                          "CRITICAL", "SSH Private Key exposed",                 "sensitive"),
     ("/.ssh/authorized_keys",                 "CRITICAL", "SSH Authorized Keys exposed",             "sensitive"),
@@ -155,7 +155,7 @@ BUILTIN_PATHS = [
     ("/.git/HEAD",                            "CRITICAL", ".git/HEAD exposed",                       "sensitive"),
     ("/.svn/entries",                         "CRITICAL", ".svn/entries exposed",                    "sensitive"),
 
-    #  5. LOGS & DEBUGGING 
+    # LOGS & DEBUGGING 
     ("/phpinfo.php",                          "HIGH",     "PHP Info (Server/Env leak)",               "sensitive"),
     ("/info.php",                             "HIGH",     "PHP Info (Server/Env leak)",               "sensitive"),
     ("/error_log",                            "HIGH",     "PHP error_log in webroot",                 "sensitive"),
@@ -173,7 +173,7 @@ BUILTIN_PATHS = [
     ("/wp-content/debug.log.old",             "HIGH",     "Old rotated debug logs",                   "sensitive"),
     ("/wp-content/wp-security-audit-log/",    "MED",      "Security Audit Log directory",             "sensitive"),
 
-    #  6. BACKUPS & DATABASE DUMPS 
+    # BACKUPS & DATABASE DUMPS 
     ("/db.sql",                               "CRITICAL", "db.sql in webroot",                        "backup"),
     ("/database.sql",                         "CRITICAL", "database.sql in webroot",                  "backup"),
     ("/dump.sql",                             "CRITICAL", "dump.sql in webroot",                      "backup"),
@@ -205,7 +205,7 @@ BUILTIN_PATHS = [
     ("/wp-content/uploads/main.sql",          "CRITICAL", "Common misplaced DB dump",                 "backup"),
 
 
-    #  7. AUTH & DATABASE ADMIN 
+    # AUTH & DATABASE ADMIN 
     ("/wp-login.php",                         "INFO",     "Login page (brute-force surface)",         "auth"),
     ("/wp-login.php?action=register",         "MED",      "User registration page",                   "auth"),
     ("/wp-login.php?action=lostpassword",     "MED",      "Password reset page",                      "auth"),
@@ -217,7 +217,7 @@ BUILTIN_PATHS = [
     ("/wp-json/wp/v2/users/1/application-passwords", "HIGH", "App passwords user 1",                "auth"),
     ("/wp-json/wp/v2/users/2/application-passwords", "HIGH", "App passwords user 2",                "auth"),
 
-    #  8. SCRIPTS & POTENTIAL BACKDOORS 
+    # SCRIPTS & POTENTIAL BACKDOORS 
     ("/wp-admin/install.php",                 "MED",      "Install script (should redirect)",         "scripts"),
     ("/wp-admin/upgrade.php",                 "MED",      "Upgrade script (should redirect)",         "scripts"),
     ("/wp-admin/setup-config.php",            "HIGH",     "Setup-config script",                      "scripts"),
@@ -230,14 +230,14 @@ BUILTIN_PATHS = [
     ("/searchrepalce.php",                    "CRITICAL", "Search-Replace-DB script (Takeover)",      "scripts"),
     ("/wp-content/uploads/extract.php",       "CRITICAL", "Unpacker script left by dev",              "scripts"),
 
-    #  9. DIRECTORY LISTING & UPLOADS 
+    # DIRECTORY LISTING & UPLOADS 
     ("/wp-content/uploads/",                  "HIGH",     "Uploads dir (check for listing)",          "uploads"),
     ("/wp-content/plugins/",                  "HIGH",     "Plugins dir (check for listing)",          "uploads"),
     ("/wp-content/themes/",                   "MED",      "Themes dir (check for listing)",           "uploads"),
     ("/wp-content/",                          "MED",      "wp-content root (check for listing)",      "uploads"),
     ("/wp-includes/",                         "MED",      "wp-includes root (check for listing)",     "uploads"),
 
-    #  10. STAGING, DEV & OS LEAKS 
+    # STAGING, DEV & OS LEAKS 
     ("/staging/",                             "MED",      "/staging/ directory",                      "staging"),
     ("/dev/",                                 "MED",      "/dev/ directory",                          "staging"),
     ("/test/",                                "MED",      "/test/ directory",                         "staging"),
@@ -558,7 +558,7 @@ class WPScanner:
     async def _get(self, client, url, follow=False):
         """Centralized GET requester with throttling and header management."""
         try:
-            # 1. Handle Throttling Logic
+            # Handle Throttling Logic
             if self.throttle:
                 delay = 0.1
                 if isinstance(self.throttle, str) and "," in self.throttle:
