@@ -11,11 +11,17 @@ Usage:
   python wp_audit.py --url https://target.com --vuln-db wp_plugins_vuln.txt
   python wp_audit.py --url https://target.com --skip-paths --skip-enum
 
-External paths file (pipe-delimited):
+External paths file:
   /custom-path/ | MED | Custom path label
 
-External plugin vuln DB (pipe-delimited, 7 fields):
+External plugin vuln DB:
   slug | SEV | Name | vuln_below | fixed | CVE | description
+
+  Stuff I want to add:
+  Compressed DB To open at runtime instead of this in-script db
+  Checks for URL's in "index of" listings like wp-content/uploads so you don't have to manually check
+  Easier DB Management
+  A will to live (jk I've got one)
 """
 import hashlib
 import asyncio
@@ -76,7 +82,7 @@ def banner(url, threads, throttle, modes):
 #  Format: (path, severity, label, category)
 # ──────────────────────────────────────────────────────────────
 BUILTIN_PATHS = [
-    # --- 1. RECONNAISSANCE & FINGERPRINTING ---
+    #  1. RECONNAISSANCE & STUFF 
     ("/readme.html",                          "MED",     "WP readme (version disclosure)",          "recon"),
     ("/license.txt",                          "MED",     "WP license.txt (version disclosure)",      "recon"),
     ("/wp-includes/js/wp-embed.min.js",       "MED",      "wp-embed.min.js (version fingerprint)",    "recon"),
@@ -92,7 +98,7 @@ BUILTIN_PATHS = [
     ("/.mailmap",                             "INFO",     "Git mailmap (Developer emails)",           "recon"),
     ("/search",                               "INFO",     "Search Bar",                               "recon"),
     
-    # --- 2. REST API & ENUMERATION ---
+    #  2. REST API & ENUM 
     ("/wp-json/",                             "INFO",     "REST API root (endpoint enumeration)",     "recon"),
     ("/wp-json/wp/v2/types",                  "INFO",     "REST API post types enumeration",          "recon"),
     ("/wp-json/wp/v2/users",                  "HIGH",     "REST API user listing (unauthenticated)",  "recon"),
@@ -115,7 +121,7 @@ BUILTIN_PATHS = [
     ("/wp-json/wp/v2/settings",               "HIGH",     "WP Settings via REST (Admin only?)",       "sensitive"),
     
 
-    # --- 3. SENSITIVE CONFIGURATION LEAKS ---
+    #  3. SENSITIVE CONFIGURATION LEAKS 
     ("/wp-content/plugins/wp-file-manager/lib/php/connector.minimal.php", "CRITICAL", "CVE-2020-25213",   "recon"),
     ("/wp-config.php",                        "CRITICAL", "wp-config.php (DB credentials)",           "sensitive"),
     ("/wp-config.php.bak",                    "CRITICAL", "wp-config.php.bak backup",               "sensitive"),
@@ -140,7 +146,7 @@ BUILTIN_PATHS = [
     ("/.aws/credentials",                     "CRITICAL", "AWS Credentials file",                     "sensitive"),
     ("/.npmrc",                               "CRITICAL", "NPM Registry Auth Tokens",                 "sensitive"),
 
-    # --- 4. ACCESS KEYS & HISTORY ---
+    #  4. ACCESS KEYS & HISTORY 
     ("/.vscode/sftp.json",                    "CRITICAL", "VSCode SFTP (Plaintext Credentials)",      "sensitive"),
     ("/.ssh/id_rsa",                          "CRITICAL", "SSH Private Key exposed",                 "sensitive"),
     ("/.ssh/authorized_keys",                 "CRITICAL", "SSH Authorized Keys exposed",             "sensitive"),
@@ -150,7 +156,7 @@ BUILTIN_PATHS = [
     ("/.git/HEAD",                            "CRITICAL", ".git/HEAD exposed",                       "sensitive"),
     ("/.svn/entries",                         "CRITICAL", ".svn/entries exposed",                    "sensitive"),
 
-    # --- 5. LOGS & DEBUGGING ---
+    #  5. LOGS & DEBUGGING 
     ("/phpinfo.php",                          "HIGH",     "PHP Info (Server/Env leak)",               "sensitive"),
     ("/info.php",                             "HIGH",     "PHP Info (Server/Env leak)",               "sensitive"),
     ("/error_log",                            "HIGH",     "PHP error_log in webroot",                 "sensitive"),
@@ -168,7 +174,7 @@ BUILTIN_PATHS = [
     ("/wp-content/debug.log.old",             "HIGH",     "Old rotated debug logs",                   "sensitive"),
     ("/wp-content/wp-security-audit-log/",    "MED",      "Security Audit Log directory",             "sensitive"),
 
-    # --- 6. BACKUPS & DATABASE DUMPS ---
+    #  6. BACKUPS & DATABASE DUMPS 
     ("/db.sql",                               "CRITICAL", "db.sql in webroot",                        "backup"),
     ("/database.sql",                         "CRITICAL", "database.sql in webroot",                  "backup"),
     ("/dump.sql",                             "CRITICAL", "dump.sql in webroot",                      "backup"),
@@ -200,7 +206,7 @@ BUILTIN_PATHS = [
     ("/wp-content/uploads/main.sql",          "CRITICAL", "Common misplaced DB dump",                 "backup"),
 
 
-    # --- 7. AUTH & DATABASE ADMIN ---
+    #  7. AUTH & DATABASE ADMIN 
     ("/wp-login.php",                         "INFO",     "Login page (brute-force surface)",         "auth"),
     ("/wp-login.php?action=register",         "MED",      "User registration page",                   "auth"),
     ("/wp-login.php?action=lostpassword",     "MED",      "Password reset page",                      "auth"),
@@ -212,7 +218,7 @@ BUILTIN_PATHS = [
     ("/wp-json/wp/v2/users/1/application-passwords", "HIGH", "App passwords user 1",                "auth"),
     ("/wp-json/wp/v2/users/2/application-passwords", "HIGH", "App passwords user 2",                "auth"),
 
-    # --- 8. SCRIPTS & POTENTIAL BACKDOORS ---
+    #  8. SCRIPTS & POTENTIAL BACKDOORS 
     ("/wp-admin/install.php",                 "MED",      "Install script (should redirect)",         "scripts"),
     ("/wp-admin/upgrade.php",                 "MED",      "Upgrade script (should redirect)",         "scripts"),
     ("/wp-admin/setup-config.php",            "HIGH",     "Setup-config script",                      "scripts"),
@@ -225,14 +231,14 @@ BUILTIN_PATHS = [
     ("/searchrepalce.php",                    "CRITICAL", "Search-Replace-DB script (Takeover)",      "scripts"),
     ("/wp-content/uploads/extract.php",       "CRITICAL", "Unpacker script left by dev",              "scripts"),
 
-    # --- 9. DIRECTORY LISTING & UPLOADS ---
+    #  9. DIRECTORY LISTING & UPLOADS 
     ("/wp-content/uploads/",                  "HIGH",     "Uploads dir (check for listing)",          "uploads"),
     ("/wp-content/plugins/",                  "HIGH",     "Plugins dir (check for listing)",          "uploads"),
     ("/wp-content/themes/",                   "MED",      "Themes dir (check for listing)",           "uploads"),
     ("/wp-content/",                          "MED",      "wp-content root (check for listing)",      "uploads"),
     ("/wp-includes/",                         "MED",      "wp-includes root (check for listing)",     "uploads"),
 
-    # --- 10. STAGING, DEV & OS LEAKS ---
+    #  10. STAGING, DEV & OS LEAKS 
     ("/staging/",                             "MED",      "/staging/ directory",                      "staging"),
     ("/dev/",                                 "MED",      "/dev/ directory",                          "staging"),
     ("/test/",                                "MED",      "/test/ directory",                         "staging"),
@@ -409,7 +415,7 @@ def _ver(v):
 def is_vulnerable(installed_str, vuln_below_str):
     """
     Return True if installed < vuln_below.
-    vuln_below represents the first 'safe' or 'fixed' version.
+    vuln_below = fixed version.
     """
     iv = _ver(installed_str)
     vb = _ver(vuln_below_str)
@@ -431,7 +437,7 @@ class WPScanner:
         self.subdomains     = getattr(args, "subdomains", False)
         self.throttle       = args.throttle
 
-        # Tor takes priority over --proxy; mutually exclusive check is in argparse
+        # Tor overides --proxy
         if getattr(args, "tor", False):
             self.use_tor = True
             self.proxy   = "socks5h://127.0.0.1:9050"
@@ -465,22 +471,22 @@ class WPScanner:
         # Concurrency control
         self.semaphore      = asyncio.Semaphore(self.threads)
 
-        # Findings storage
+        # Findings
         self.path_findings   = []
         self.plugin_findings = []
 
-        # Regex patterns for passive detection
+        # passive detection
         self._RE_PLUGIN = re.compile(r'/wp-content/plugins/([^/ \'\"]+)/')
         self._RE_WP_VER = re.compile(r'content="WordPress ([0-9.]+)"')
 
-        # Progress counters
+
         self.checked_paths   = 0
         self.total_paths     = 0
         self.checked_plugins = 0
         self.total_plugins   = 0
         self.wp_version      = None
 
-        # False Positive Check
+        # False Positive Check (Hashes first few KB of front page and checks HTTP 200's against it down a bit from here)
         self._homepage_url   = None
         self._homepage_hash  = None
 
@@ -489,7 +495,7 @@ class WPScanner:
         self._load_vuln_db()
 
         
-
+    # External Vuln DB Load
     def _load_vuln_db(self):
         """Populates the vuln_db with builtin and external data."""
         # Load Builtin entries
@@ -497,7 +503,6 @@ class WPScanner:
             s_clean = slug.strip().lower()
             self.vuln_db.setdefault(s_clean, []).append((vb, fixed, cve, sev, name, desc))
 
-        # Load External File
         if self.vuln_db_file:
             try:
                 loaded = 0
@@ -525,6 +530,8 @@ class WPScanner:
             except Exception as e:
                 print(f"  {C['crit']}[-]{C['reset']} Error loading vuln-db: {e}")
 
+
+    # Matches the plugins found with the vulnerability DB
     def _match_vulns(self, slug, version_str):
         """Matches a detected plugin/version against the loaded database."""
         hits = []
@@ -541,7 +548,7 @@ class WPScanner:
         
         return hits
 
-    # ── HTTP helpers ───────────────────────────────────────────
+    # HTTP helper stuff
     def _ua(self):
         """Returns the appropriate User-Agent string based on configuration."""
         if self.custom_ua:
@@ -569,7 +576,7 @@ class WPScanner:
                 if delay > 0:
                     await asyncio.sleep(delay)
 
-            # 2. Setup Headers
+            # Setup Headers (Customize how you want, I tried to make mine look like typical tor Traffic)
             headers = {}
             headers["User-Agent"] = self._ua() if (self.custom_ua or self.random_ua) else "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/115.0"
             headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
@@ -593,6 +600,8 @@ class WPScanner:
         except Exception:
             return None
 
+
+    # overcomplicated way to check the torproject API to check if the TOR IP is legit because it's cooler than using a wrapper
     async def _setup_tor(self, client):
         print(f"  {C['info']}[TOR]{C['reset']} Proxy set to {self.proxy}")
         try:
@@ -619,7 +628,7 @@ class WPScanner:
             print(f"  {C['crit']}[TOR]{C['reset']} Aborting to prevent IP leak.{C['reset']}")
             sys.exit(1)
 
-    # ── Pipe-file loader ───────────────────────────────────────
+    # Pipe-file loader
     def _load_pipe_file(self, path, as_plugin=False):
         items = []
         if not path:
@@ -649,9 +658,8 @@ class WPScanner:
         except FileNotFoundError:
             print(f"  {C['dim']}[-] File not found: {path}{C['reset']}")
         return items
-    # ══════════════════════════════════════════════════════════
-    #  PHASE 1 — Subdomain Check
-    # ══════════════════════════════════════════════════════════
+      
+    # Subdomain Check
     async def _query_crt_sh(self, client, domain):
         """Passive subdomain discovery via crt.sh."""
         url = f"https://crt.sh/?q=%.{domain}&output=json"
@@ -678,9 +686,7 @@ class WPScanner:
             print(f"  {C['dim']}[-]{C['reset']} crt.sh discovery skipped: {e}")
             return []
 
-    # ══════════════════════════════════════════════════════════
-    #  PHASE 2 — Path checks
-    # ══════════════════════════════════════════════════════════
+    #  Path checks
     async def _fetch_path(self, client, path, sev, label, cat):
         async with self.semaphore:
             resp = await self._get(client, f"{self.url}{path}")
@@ -736,9 +742,7 @@ class WPScanner:
         print(f"  {self.total_paths} paths to check\n")
         await asyncio.gather(*[self._fetch_path(client, *t) for t in deduped])
 
-    # ══════════════════════════════════════════════════════════
-    #  PHASE 3 — Passive detection from page source
-    # ══════════════════════════════════════════════════════════
+    # Passive detection from front page
     _RE_PLUGIN  = re.compile(r'/wp-content/plugins/([a-zA-Z0-9_-]+)/',  re.IGNORECASE)
     _RE_THEME   = re.compile(r'/wp-content/themes/([a-zA-Z0-9_-]+)/',   re.IGNORECASE)
     _RE_WP_VER  = re.compile(
@@ -747,6 +751,7 @@ class WPScanner:
     )
     _RE_WP_VER2 = re.compile(r'(?:ver=|version["\']?\s*[:=]\s*["\']?)([\d]+\.[\d.]+)', re.IGNORECASE)
 
+    # Checks the readme of each plugin for version (e.g. Stable Tag or Version)
     async def _get_version_from_readme(self, client, slug):
         """Fetch /wp-content/plugins/<slug>/readme.txt and parse version."""
         # Ensure the URL is clean (handles trailing slashes)
@@ -836,14 +841,12 @@ class WPScanner:
                 db_tag = f"  {C['info']}[in vuln DB — no match at v{ver_str}]{C['reset']}" if in_db else ""
                 ver_col = C["dim"] if version else C["yellow"] # Yellow for unknown
                 
-                print(f"  {C['dim']}[----]{C['reset']} {slug}  {ver_col}v{ver_str}{C['reset']}{db_tag}")
+                print(f"  {C['dim']}[-]{C['reset']} {slug}  {ver_col}v{ver_str}{C['reset']}{db_tag}")
                 self.plugin_findings.append({
                     "slug": slug, "version": ver_str, "source": "passive", "vulns": [],
                 })
 
-    # ══════════════════════════════════════════════════════════
-    #  PHASE 4 — Wordlist enumeration
-    # ══════════════════════════════════════════════════════════
+    #  Active Plugin enum
     async def _enum_plugin(self, client, slug):
         """Performs active enumeration for a specific plugin slug."""
         async with self.semaphore:
@@ -911,9 +914,7 @@ class WPScanner:
               f"({C['dim']}{len(passive_found)} skipped — already detected passively{C['reset']})\n")
         await asyncio.gather(*[self._enum_plugin(client, slug) for slug in to_check])
 
-    # ══════════════════════════════════════════════════════════
     #  Main
-    # ══════════════════════════════════════════════════════════
     async def run(self):
         hdr("WP-AUDIT START")
 
@@ -923,11 +924,11 @@ class WPScanner:
             follow_redirects=True,
         ) as client:
 
-            # Tor verification — proxy is already active at client construction
+            # Tor verification
             if self.use_tor:
                 await self._setup_tor(client)
 
-            # Initial target list
+            # target list
             targets = [self.url]
 
             # Subdomain Discovery Phase
@@ -969,9 +970,7 @@ class WPScanner:
         if self.output:
             self._save_output()
 
-    # ══════════════════════════════════════════════════════════
     #  Summary & output
-    # ══════════════════════════════════════════════════════════
     def _print_summary(self):
         print(f"\n{'─'*60}")
         print(f"{C['bold']}  Scan complete.{C['reset']}")
@@ -998,7 +997,7 @@ class WPScanner:
                     print(f"    {C['dim']}{f['status']}{C['reset']}  {f['label']}")
                     print(f"         {C['dim']}{f['url']}{C['reset']}")
 
-        # Deduplicate plugin vuln summary by slug
+        # Dedupe plugin vulns
         seen_slugs = set()
         if vuln_plugins:
             print(f"\n{C['bold']}  Vulnerable plugins:{C['reset']}")
@@ -1060,10 +1059,10 @@ class WPScanner:
             print(f"\n  {C['crit']}[-] Save failed: {e}{C['reset']}")
 
 
-# ──────────────────────────────────────────────────────────────
-#  Entry point
-# ──────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
+    # Legal Warning for --help
+  
     parser = argparse.ArgumentParser(
         description=(
             "WordPress Intel Scanner\n\n"
@@ -1086,7 +1085,7 @@ examples:
         """
     )
 
-    # All arguments attached to the SINGLE parser instance
+    # Args
     parser.add_argument("--url",               required=True,           help="Target (https://target.com)")
     parser.add_argument("--subdomains",        action="store_true",     help="Passive subdomain discovery via crt.sh")
     parser.add_argument("--paths",             default=None,            help="Extra paths file")
@@ -1111,7 +1110,7 @@ examples:
     if args.tor and args.proxy:
         parser.error("--tor and --proxy are mutually exclusive")
 
-    # LEGAL CHECK: Robust strip and lower
+    # Legal warning in red because IM FANCY LIKE DAT
     print(f"""
     {C['crit']}{C['bold']}┌──────────────────────────────────────────────────────────┐
     │                      LEGAL WARNING                       │
@@ -1122,11 +1121,11 @@ examples:
     └──────────────────────────────────────────────────────────┘{C['reset']}""")
     confirm = input("Type 'I HAVE AUTHORIZATION' OR 'ACK' to continue: ").strip().lower()
     
-    # Check if the cleaned input matches either allowed phrase
+    # python101 you can read yourself
     if confirm not in ["i have authorization", "ack"]:
         print("[-] Authorization not confirmed. Exiting.")
         sys.exit(1)
 
-    # Initialize and run
+    # This is what the kids call... the main thing
     scanner = WPScanner(args)
     asyncio.run(scanner.run())
