@@ -22,6 +22,7 @@ External plugin vuln DB:
   Checks for URL's in "index of" listings like wp-content/uploads so you don't have to manually check
   Easier DB Management
   A will to live (jk I've got one)
+  Randomization of paths (forgot if I already added this or not)
 """
 import hashlib
 import asyncio
