@@ -1,6 +1,6 @@
 # WP-Audit
 
-**Open-source WordPress vulnerability scanner. No API keys, no fluff, runs local, editable CVE database.**
+**Open-source WordPress vulnerability scanner. No API keys, runs local, editable CVE database.**
 
 Scans WordPress installations for exposed sensitive files, version disclosures, misconfigured paths, and plugins with known CVEs. Everything runs on your machine — no external services, no accounts, no telemetry.
 
