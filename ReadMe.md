@@ -10,14 +10,18 @@ Scans WordPress installations for exposed sensitive files, version disclosures, 
 
 - **Path & file checks** — 150+ built-in checks covering credentials, backups, logs, shells, staging artifacts, auth endpoints, and more
 - **Passive plugin detection** — extracts plugin slugs from page source without active enumeration
+- **Active Plugin Detection** — Enumerates a list of plugins.
 - **Version fingerprinting** — fetches `readme.txt` from detected plugins to determine installed version
-- **CVE matching** — built-in database of 130+ plugin vulnerabilities matched against detected versions
-- **Tor support** — route all traffic through Tor with DNS-over-SOCKS5 (`socks5h`) and exit node verification
+- **CVE matching** — built-in database of plugin vulnerabilities matched against detected versions
+- **Tor support** — route all traffic through Tor with DNS-over-SOCKS5 (`socks5h`) with `--tor`, and exit node verification
 - **Subdomain discovery** — passive enumeration via crt.sh
 - **False positive reduction** — homepage hash comparison to filter redirects masquerading as findings
 - **Flexible output** — JSON or plaintext report
 - **Editable vuln DB** — extend the built-in database with a pipe-delimited external file
 
+**Coming in Future:**
+- Sql Injection tests
+- XSS Tests  
 ---
 
 ## Requirements
